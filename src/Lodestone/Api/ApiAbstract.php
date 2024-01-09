@@ -5,6 +5,7 @@ namespace Lodestone\Api;
 use Lodestone\Http\Http;
 use Lodestone\Http\Request;
 use Lodestone\Http\RequestConfig;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class ApiAbstract
@@ -19,6 +20,11 @@ class ApiAbstract
     public function __construct()
     {
         $this->http = new Http();
+    }
+
+    public function setHttpClient(HttpClientInterface $httpClient): void
+    {
+        $this->http->setClient($httpClient);
     }
 
     /**

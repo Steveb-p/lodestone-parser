@@ -9,6 +9,8 @@ use Lodestone\Exceptions\LodestonePrivateException;
 use Lodestone\Parser\Parser;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpClient\CurlHttpClient;
+use Symfony\Component\HttpClient\ScopingHttpClient;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class Http
 {
@@ -16,14 +18,32 @@ class Http
     const TIMEOUT  = 30;
 
     /**
+     * @var HttpClientInterface|null
+     */
+    private $client;
+
+    /**
      * Get Symfony Client
      */
     private function getClient(string $baseUri = null)
     {
-        return new CurlHttpClient([
-            'base_uri' => $baseUri ?: self::BASE_URI,
-            'timeout'  => self::TIMEOUT
-        ]);
+        if (!isset($this->client)) {
+            $this->client = new CurlHttpClient([
+                'base_uri' => self::BASE_URI,
+                'timeout' => self::TIMEOUT,
+            ]);
+        }
+
+        if ($baseUri !== null) {
+            return ScopingHttpClient::forBaseUri($this->client, $baseUri);
+        }
+
+        return $this->client;
+    }
+
+    public function setClient(HttpClientInterface $client): void
+    {
+        $this->client = $client;
     }
 
     /**

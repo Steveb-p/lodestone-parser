@@ -6,6 +6,7 @@ use Lodestone\Http\AsyncHandler;
 use Lodestone\Http\Http;
 use Lodestone\Http\RequestConfig;
 use Lodestone\Api\{
+    ApiAbstract,
     Character,
     FreeCompany,
     Linkshell,
@@ -14,25 +15,45 @@ use Lodestone\Api\{
     Leaderboards,
     DevPosts
 };
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class Api
 {
     private $namespaces = [];
 
     /**
+     * @var HttpClientInterface|null
+     */
+    private $httpClient;
+
+    public function __construct(?HttpClientInterface $httpClient = null)
+    {
+        $this->httpClient = $httpClient;
+    }
+
+    public function setHttpClient(?HttpClientInterface $httpClient): void
+    {
+        $this->httpClient = $httpClient;
+    }
+
+    /**
      * will return an existing set namespace or a new one.
      */
-    private function getApiNamespace($namespace)
+    private function getApiNamespace(string $namespace)
     {
-        $class = $this->namespaces[$namespace] ?? new $namespace();
-
         if (!isset($this->namespaces[$namespace])) {
+            $class = new $namespace();
+
+            if (isset($this->httpClient) && $class instanceof ApiAbstract) {
+                $class->setHttpClient($this->httpClient);
+            }
+
             $this->namespaces[$namespace] = $class;
         }
 
-        return $class;
+        return $this->namespaces[$namespace];
     }
-    
+
     public function requestId(string $name)
     {
         AsyncHandler::setRequestId($name);
